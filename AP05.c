@@ -81,9 +81,9 @@ struct node* insert_node(struct node* node, int value) {
     if (node == NULL) return createNode(value);
 
     if (value < node->value) {
-        node->left = insert(node->left, value);
+        node->left = insert_node(node->left, value);
     } else if (value > node->value) {
-        node->right = insert(node->right, value);
+        node->right = insert_node(node->right, value);
     } else {  // Equal values are not allowed in BST
         return node;
     }
