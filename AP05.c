@@ -213,8 +213,10 @@ void print_values_in_range(AVLnode* root, int low, int high, int* found) {
     if (root->value >= low && root->value <= high) {
         if (*found == 0) {
             *found = 1;
+            printf("%d", root->value);
+        } else {
+            printf(", %d", root->value);
         }
-        printf("%d ", root->value);
     }
 
     if (root->value < high)
