@@ -4,15 +4,15 @@
 int const true = 1;
 int const false = 0;
 
-typedef struct node {
+typedef struct AVLnode {
     int value;
     int height;
-    struct node *left;
-    struct node *right;
-} node;
+    struct AVLnode *left;
+    struct AVLnode *right;
+} AVLnode;
 
 // Function to perform preorder traversal of AVL tree
-void print_in_order(node* r) {
+void print_in_order(AVLnode* r) {
     if (r != NULL) {
         print_in_order(r->left);
         printf("%d ", r->value);
@@ -21,14 +21,14 @@ void print_in_order(node* r) {
 }
 
 // Function to get height of the node
-int get_height(struct node* n) {
+int get_height(AVLnode* n) {
     if (n == NULL) return 0;
     return n->height;
 }
 
 // Function to create a new node
-struct node* create_node(int value) {
-    struct node* node = (struct node*)malloc(sizeof(struct node));
+AVLnode* create_node(int value) {
+    AVLnode* node = (struct AVLnode*)malloc(sizeof(struct AVLnode));
     node->value = value;
     node->height = 1;
     node->left = NULL;
@@ -42,15 +42,15 @@ int max(int a, int b) {
 }
 
 // Function to get balance factor of a node
-int get_balance_factor(struct node* n) {
+int get_balance_factor(AVLnode* n) {
     if (n == NULL) return 0;
     return get_height(n->left) - get_height(n->right);
 }
 
 // Right rotation function
-struct node* right_rotate(struct node* y) {
-    struct node* x = y->left;
-    struct node* T2 = x->right;
+AVLnode* right_rotate(AVLnode* y) {
+    AVLnode* x = y->left;
+    AVLnode* T2 = x->right;
 
     // Perform rotation
     x->right = y;
@@ -64,9 +64,9 @@ struct node* right_rotate(struct node* y) {
 }
 
 // Left rotation function
-struct node* left_rotate(struct node* x) {
-    struct node* y = x->right;
-    struct node* T2 = y->left;
+AVLnode* left_rotate(AVLnode* x) {
+    AVLnode* y = x->right;
+    AVLnode* T2 = y->left;
 
     // Perform rotation
     y->left = x;
@@ -80,7 +80,7 @@ struct node* left_rotate(struct node* x) {
 }
 
 // Function to insert a value into AVL tree
-struct node* insert_node(struct node* node, int value) {
+AVLnode* insert_node(AVLnode* node, int value) {
     // 1. Perform standard BST insertion
     if (node == NULL) return create_node(value);
 
@@ -114,7 +114,7 @@ struct node* insert_node(struct node* node, int value) {
     return node;
 }
 
-node* finds_successor(node* node) {
+AVLnode* finds_successor(AVLnode* node) {
     while (node->left != NULL)
         node = node->left;
 
@@ -122,7 +122,7 @@ node* finds_successor(node* node) {
 }
 
 // Function to delete a value in AVL tree
-node* delete_node(node* root, int value) {
+AVLnode* delete_node(AVLnode* root, int value) {
     if (root == NULL) return root;
 
     if (value < root->value) {
@@ -131,7 +131,7 @@ node* delete_node(node* root, int value) {
         root->right = delete_node(root->right, value);
     } else {
         if ((root->left == NULL) || (root->right == NULL)) {
-            node *temp = root->left ? root->left : root->right;
+            AVLnode* temp = root->left ? root->left : root->right;
 
             if (temp == NULL) {
                 temp = root;
@@ -141,7 +141,7 @@ node* delete_node(node* root, int value) {
             }
             free(temp);
         } else {
-            node* temp = finds_successor(root->right);
+            AVLnode* temp = finds_successor(root->right);
             root->value = temp->value;
             root->right = delete_node(root->right, temp->value);
         }
@@ -172,7 +172,7 @@ node* delete_node(node* root, int value) {
     return root;
 }
 
-int search(node* root, int value) {
+int search(AVLnode* root, int value) {
     if (root == NULL)
         return false;
 
@@ -185,7 +185,7 @@ int search(node* root, int value) {
     return search(root->right, value);
 }
 
-void insert_or_remove_value(node** root, int value) {
+void insert_or_remove_value(AVLnode** root, int value) {
     int value_found = search(*root, value);
 
     if (value_found)
@@ -196,7 +196,7 @@ void insert_or_remove_value(node** root, int value) {
 
 int main() {
     int n;
-    node *root = NULL;
+    AVLnode *root = NULL;
 
     while (scanf("%d", &n) && n >= 0) {
         root = insert_node(root, n);
