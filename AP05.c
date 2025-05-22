@@ -1,6 +1,9 @@
 #include<stdio.h>
 #include<stdlib.h>
 
+int const true = 1;
+int const false = 0;
+
 typedef struct node {
     int value;
     int height;
@@ -8,43 +11,44 @@ typedef struct node {
     struct node *right;
 } node;
 
-void printInOrder(node* r) {
+// Function to perform preorder traversal of AVL tree
+void print_in_order(node* r) {
     if (r != NULL) {
-        printInOrder(r->left);
+        print_in_order(r->left);
         printf("%d ", r->value);
-        printInOrder(r->right);
+        print_in_order(r->right);
     }
 }
 
 // Function to get height of the node
-int getHeight(struct node* n) {
+int get_height(struct node* n) {
     if (n == NULL) return 0;
     return n->height;
 }
 
 // Function to create a new node
-struct node* createNode(int value) {
+struct node* create_node(int value) {
     struct node* node = (struct node*)malloc(sizeof(struct node));
     node->value = value;
+    node->height = 1;
     node->left = NULL;
     node->right = NULL;
-    node->height = 1;
     return node;
 }
 
 // Utility function to get the maximum of two integers
 int max(int a, int b) { 
-    return (a > b) ? a : b;
+    return a > b ? a : b;
 }
 
 // Function to get balance factor of a node
-int getBalanceFactor(struct node* n) {
+int get_balance_factor(struct node* n) {
     if (n == NULL) return 0;
-    return getHeight(n->left) - getHeight(n->right);
+    return get_height(n->left) - get_height(n->right);
 }
 
 // Right rotation function
-struct node* rightRotate(struct node* y) {
+struct node* right_rotate(struct node* y) {
     struct node* x = y->left;
     struct node* T2 = x->right;
 
@@ -53,14 +57,14 @@ struct node* rightRotate(struct node* y) {
     y->left = T2;
 
     // Update heights
-    y->height = max(getHeight(y->left), getHeight(y->right)) + 1;
-    x->height = max(getHeight(x->left), getHeight(x->right)) + 1;
+    y->height = max(get_height(y->left), get_height(y->right)) + 1;
+    x->height = max(get_height(x->left), get_height(x->right)) + 1;
 
     return x;
 }
 
 // Left rotation function
-struct node* leftRotate(struct node* x) {
+struct node* left_rotate(struct node* x) {
     struct node* y = x->right;
     struct node* T2 = y->left;
 
@@ -69,8 +73,8 @@ struct node* leftRotate(struct node* x) {
     x->right = T2;
 
     // Update heights
-    x->height = max(getHeight(x->left), getHeight(x->right)) + 1;
-    y->height = max(getHeight(y->left), getHeight(y->right)) + 1;
+    x->height = max(get_height(x->left), get_height(x->right)) + 1;
+    y->height = max(get_height(y->left), get_height(y->right)) + 1;
 
     return y;
 }
@@ -78,7 +82,7 @@ struct node* leftRotate(struct node* x) {
 // Function to insert a value into AVL tree
 struct node* insert_node(struct node* node, int value) {
     // 1. Perform standard BST insertion
-    if (node == NULL) return createNode(value);
+    if (node == NULL) return create_node(value);
 
     if (value < node->value) {
         node->left = insert_node(node->left, value);
@@ -88,58 +92,126 @@ struct node* insert_node(struct node* node, int value) {
         return node;
     }
 
-    // 2. Update height of this ancestor node
-    node->height = 1 + max(getHeight(node->left), getHeight(node->right));
+    node->height = 1 + max(get_height(node->left), get_height(node->right));
+    int balance = get_balance_factor(node);
 
-    // 3. Get the balance factor of this ancestor node to
-    // check whether this node became unbalanced
-    int balance = getBalanceFactor(node);
-
-    // 4. If the node becomes unbalanced, then there are 4
-    // cases
-
-    // Left Left Case
     if (balance > 1 && value < node->left->value)
-        return rightRotate(node);
+        return right_rotate(node);
 
-    // Right Right Case
     if (balance < -1 && value > node->right->value)
-        return leftRotate(node);
+        return left_rotate(node);
 
-    // Left Right Case
     if (balance > 1 && value > node->left->value) {
-        node->left = leftRotate(node->left);
-        return rightRotate(node);
+        node->left = left_rotate(node->left);
+        return right_rotate(node);
     }
 
-    // Right Left Case
     if (balance < -1 && value < node->right->value) {
-        node->right = rightRotate(node->right);
-        return leftRotate(node);
+        node->right = right_rotate(node->right);
+        return left_rotate(node);
     }
 
-    // Return the (unchanged) node pointer
     return node;
 }
 
-// Function to perform preorder traversal of AVL tree
-void inOrder(struct node* root) {
-    if (root != NULL) {
-        inOrder(root->left);
-        printf("%d ", root->value);
-        inOrder(root->right);
+node* finds_successor(node* node) {
+    while (node->left != NULL)
+        node = node->left;
+
+    return node;
+}
+
+// Function to delete a value in AVL tree
+node* delete_node(node* root, int value) {
+    if (root == NULL) return root;
+
+    if (value < root->value) {
+        root->left = delete_node(root->left, value);
+    } else if (value > root->value) {
+        root->right = delete_node(root->right, value);
+    } else {
+        if ((root->left == NULL) || (root->right == NULL)) {
+            node *temp = root->left ? root->left : root->right;
+
+            if (temp == NULL) {
+                temp = root;
+                root = NULL;
+            } else {
+                *root = *temp; 
+            }
+            free(temp);
+        } else {
+            node* temp = finds_successor(root->right);
+            root->value = temp->value;
+            root->right = delete_node(root->right, temp->value);
+        }
     }
+
+    if (root == NULL) return root;
+    root->height = 1 + max(get_height(root->left), get_height(root->right));
+    int balance = get_balance_factor(root);
+
+    if (balance > 1 && get_balance_factor(root->left) >= 0){
+        return right_rotate(root);
+    }
+
+    if (balance > 1 && get_balance_factor(root->left) < 0) {
+        root->left = left_rotate(root->left);
+        return right_rotate(root);
+    }
+
+    if (balance < -1 && get_balance_factor(root->right) <= 0){
+        return left_rotate(root);
+    }
+
+    if (balance < -1 && get_balance_factor(root->right) > 0) {
+        root->right = right_rotate(root->right);
+        return left_rotate(root);
+    }
+
+    return root;
+}
+
+int search(node* root, int value) {
+    if (root == NULL)
+        return false;
+
+    if (root->value == value)
+        return true;
+
+    if (value < root->value) 
+        return search(root->left, value);
+
+    return search(root->right, value);
+}
+
+void insert_or_remove_value(node** root, int value) {
+    int value_found = search(*root, value);
+
+    if (value_found)
+        *root = delete_node(*root, value);
+    else
+        *root = insert_node(*root, value);
 }
 
 int main() {
     int n;
     node *root = NULL;
 
-    while (scanf("%d", &n) && n > 0) {
+    while (scanf("%d", &n) && n >= 0) {
         root = insert_node(root, n);
     }
+    
+    print_in_order(root);
+    printf("\n");
 
-    printInOrder(root);
+    while (scanf("%d", &n) && n >= 0) {
+        insert_or_remove_value(&root, n);
+        print_in_order(root);
+        printf("\n");
+    }
+
+    // print_in_order(root);
 
     return 0;
 }
