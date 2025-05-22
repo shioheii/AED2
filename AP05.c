@@ -1,22 +1,26 @@
 #include<stdio.h>
 #include<stdlib.h>
-
+/*
+6 4 3 2 1 -1
+4 5 -1
+2 6
+*/
 int const true = 1;
 int const false = 0;
 
 typedef struct AVLnode {
     int value;
     int height;
-    struct AVLnode *left;
-    struct AVLnode *right;
+    struct AVLnode* left;
+    struct AVLnode* right;
 } AVLnode;
 
 // Function to perform preorder traversal of AVL tree
-void print_in_order(AVLnode* r) {
-    if (r != NULL) {
-        print_in_order(r->left);
-        printf("%d ", r->value);
-        print_in_order(r->right);
+void print_in_order(AVLnode* root) {
+    if (root != NULL) {
+        print_in_order(root->left);
+        printf("%d ", root->value);
+        print_in_order(root->right);
     }
 }
 
@@ -52,11 +56,9 @@ AVLnode* right_rotate(AVLnode* y) {
     AVLnode* x = y->left;
     AVLnode* T2 = x->right;
 
-    // Perform rotation
     x->right = y;
     y->left = T2;
 
-    // Update heights
     y->height = max(get_height(y->left), get_height(y->right)) + 1;
     x->height = max(get_height(x->left), get_height(x->right)) + 1;
 
@@ -68,11 +70,9 @@ AVLnode* left_rotate(AVLnode* x) {
     AVLnode* y = x->right;
     AVLnode* T2 = y->left;
 
-    // Perform rotation
     y->left = x;
     x->right = T2;
 
-    // Update heights
     x->height = max(get_height(x->left), get_height(x->right)) + 1;
     y->height = max(get_height(y->left), get_height(y->right)) + 1;
 
@@ -81,14 +81,13 @@ AVLnode* left_rotate(AVLnode* x) {
 
 // Function to insert a value into AVL tree
 AVLnode* insert_node(AVLnode* node, int value) {
-    // 1. Perform standard BST insertion
     if (node == NULL) return create_node(value);
 
     if (value < node->value) {
         node->left = insert_node(node->left, value);
     } else if (value > node->value) {
         node->right = insert_node(node->right, value);
-    } else {  // Equal values are not allowed in BST
+    } else {
         return node;
     }
 
@@ -194,24 +193,81 @@ void insert_or_remove_value(AVLnode** root, int value) {
         *root = insert_node(*root, value);
 }
 
-int main() {
-    int n;
-    AVLnode *root = NULL;
+void print_tree_heights(AVLnode* root) {
+    if (root == NULL) {
+        printf("ARVORE VAZIA\n");
+    } else {
+        int hl = get_height(root->left);
+        int hr = get_height(root->right);
+        int h = max(hl, hr);
+        printf("%d, %d, %d\n", h, hl, hr);
+    }
+}
 
+void print_values_in_range(AVLnode* root, int low, int high, int* found) {
+    if (root == NULL) return;
+
+    if (root->value > low)
+        print_values_in_range(root->left, low, high, found);
+
+    if (root->value >= low && root->value <= high) {
+        if (*found == 0) {
+            *found = 1;
+        }
+        printf("%d ", root->value);
+    }
+
+    if (root->value < high)
+        print_values_in_range(root->right, low, high, found);
+}
+
+void print_node_height_info(AVLnode* root, int value) {
+    if (root == NULL) return;
+
+    if (root->value == value) {
+        int hl = get_height(root->left);
+        int hr = get_height(root->right);
+        int h = max(hl, hr);
+        printf("%d, %d, %d\n", h, hl, hr);
+    } else if (value < root->value) {
+        print_node_height_info(root->left, value);
+    } else {
+        print_node_height_info(root->right, value);
+    }
+}
+
+int main() {
+    int n, startRange, endRange;
+    AVLnode* root = NULL;
+
+    // 1ª linha: inserção inicial
     while (scanf("%d", &n) && n >= 0) {
         root = insert_node(root, n);
     }
-    
-    print_in_order(root);
-    printf("\n");
+    print_tree_heights(root);
 
+    // 2ª linha: inserções/remoções
     while (scanf("%d", &n) && n >= 0) {
         insert_or_remove_value(&root, n);
-        print_in_order(root);
-        printf("\n");
     }
+    print_tree_heights(root);
 
-    // print_in_order(root);
+    // 3ª linha: faixa de busca
+    scanf("%d %d", &startRange, &endRange);
+
+    int found = 0;
+    print_values_in_range(root, startRange, endRange, &found);
+    if (!found)
+        printf("NADA A EXIBIR");
+    printf("\n");
+
+    if (found) {
+        for (int i = startRange; i <= endRange; i++) {
+            if (search(root, i)) {
+                print_node_height_info(root, i);
+            }
+        }
+    }
 
     return 0;
 }
