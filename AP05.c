@@ -1,3 +1,9 @@
+/***********************************************
+ * UNIFESP - Universidade Federal de São Paulo
+ * Nome: Bruno Shiohei Kinoshita do Nascimento
+ * RA: 176475
+************************************************/
+
 #include<stdio.h>
 #include<stdlib.h>
 /*
