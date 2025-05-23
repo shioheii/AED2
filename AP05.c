@@ -14,6 +14,7 @@ typedef struct AVLnode {
     struct AVLnode* right;
 } AVLnode;
 
+// Libera recursivamente toda a memória alocada para a árvore AVL
 void frees_allocated_memory(AVLnode* root) {
     if (root != NULL) {
         frees_allocated_memory(root->left);
@@ -22,7 +23,7 @@ void frees_allocated_memory(AVLnode* root) {
     }
 }
 
-// Function to perform preorder traversal of AVL tree
+// Realiza a travessia in-order (em ordem) da árvore AVL e imprime os valores
 void print_in_order(AVLnode* root) {
     if (root != NULL) {
         print_in_order(root->left);
@@ -31,13 +32,13 @@ void print_in_order(AVLnode* root) {
     }
 }
 
-// Function to get height of the node
+// Retorna a altura de um nó (0 se o nó for NULL)
 int get_height(AVLnode* n) {
     if (n == NULL) return 0;
     return n->height;
 }
 
-// Function to create a new node
+// Cria e retorna um novo nó AVL com o valor fornecido
 AVLnode* create_node(int value) {
     AVLnode* node = (struct AVLnode*)malloc(sizeof(struct AVLnode));
     node->value = value;
@@ -47,18 +48,18 @@ AVLnode* create_node(int value) {
     return node;
 }
 
-// Utility function to get the maximum of two integers
+// Retorna o maior entre dois valores inteiros
 int max(int a, int b) { 
     return a > b ? a : b;
 }
 
-// Function to get balance factor of a node
+// Calcula e retorna o fator de balanceamento de um nó
 int get_balance_factor(AVLnode* n) {
     if (n == NULL) return 0;
     return get_height(n->left) - get_height(n->right);
 }
 
-// Right rotation function
+// Executa uma rotação simples para a direita
 AVLnode* right_rotate(AVLnode* y) {
     AVLnode* x = y->left;
     AVLnode* T2 = x->right;
@@ -72,7 +73,7 @@ AVLnode* right_rotate(AVLnode* y) {
     return x;
 }
 
-// Left rotation function
+// Executa uma rotação simples para a esquerda
 AVLnode* left_rotate(AVLnode* x) {
     AVLnode* y = x->right;
     AVLnode* T2 = y->left;
@@ -86,40 +87,41 @@ AVLnode* left_rotate(AVLnode* x) {
     return y;
 }
 
-// Function to insert a value into AVL tree
-AVLnode* insert_node(AVLnode* node, int value) {
-    if (node == NULL) return create_node(value);
+// Insere um valor na árvore AVL e realiza balanceamentos se necessário
+AVLnode* insert_node(AVLnode* root, int value) {
+    if (root == NULL) return create_node(value);
 
-    if (value < node->value) {
-        node->left = insert_node(node->left, value);
-    } else if (value > node->value) {
-        node->right = insert_node(node->right, value);
+    if (value < root->value) {
+        root->left = insert_node(root->left, value);
+    } else if (value > root->value) {
+        root->right = insert_node(root->right, value);
     } else {
-        return node;
+        return root;
     }
 
-    node->height = 1 + max(get_height(node->left), get_height(node->right));
-    int balance = get_balance_factor(node);
+    root->height = 1 + max(get_height(root->left), get_height(root->right));
+    int balance = get_balance_factor(root);
 
-    if (balance > 1 && value < node->left->value)
-        return right_rotate(node);
+    if (balance > 1 && value < root->left->value)
+        return right_rotate(root);
 
-    if (balance < -1 && value > node->right->value)
-        return left_rotate(node);
+    if (balance < -1 && value > root->right->value)
+        return left_rotate(root);
 
-    if (balance > 1 && value > node->left->value) {
-        node->left = left_rotate(node->left);
-        return right_rotate(node);
+    if (balance > 1 && value > root->left->value) {
+        root->left = left_rotate(root->left);
+        return right_rotate(root);
     }
 
-    if (balance < -1 && value < node->right->value) {
-        node->right = right_rotate(node->right);
-        return left_rotate(node);
+    if (balance < -1 && value < root->right->value) {
+        root->right = right_rotate(root->right);
+        return left_rotate(root);
     }
 
-    return node;
+    return root;
 }
 
+// Encontra o nó sucessor (menor valor da subárvore à direita)
 AVLnode* finds_successor(AVLnode* node) {
     while (node->left != NULL)
         node = node->left;
@@ -127,7 +129,7 @@ AVLnode* finds_successor(AVLnode* node) {
     return node;
 }
 
-// Function to delete a value in AVL tree
+// Remove um valor da árvore AVL e realiza balanceamentos se necessário
 AVLnode* delete_node(AVLnode* root, int value) {
     if (root == NULL) return root;
 
@@ -178,6 +180,7 @@ AVLnode* delete_node(AVLnode* root, int value) {
     return root;
 }
 
+// Procura um nó com determinado valor e retorna seu endereço ou NULL
 AVLnode* search_node(AVLnode* root, int value) {
     if (root == NULL)
         return NULL;
@@ -191,6 +194,7 @@ AVLnode* search_node(AVLnode* root, int value) {
     return search_node(root->right, value);
 }
 
+// Insere o valor se ele não estiver na árvore, ou remove se já estiver
 void insert_or_remove_value(AVLnode** root, int value) {
     AVLnode* temp = search_node(*root, value);
 
@@ -200,6 +204,7 @@ void insert_or_remove_value(AVLnode** root, int value) {
         *root = insert_node(*root, value);
 }
 
+// Imprime altura da raiz, da subárvore esquerda e da subárvore direita
 void print_tree_heights(AVLnode* root) {
     if (root == NULL) {
         printf("ARVORE VAZIA\n");
@@ -211,13 +216,14 @@ void print_tree_heights(AVLnode* root) {
     }
 }
 
-void print_values_in_range(AVLnode* root, int low, int high, int* found) {
+// Imprime os valores dentro de uma faixa [start, end] em ordem crescente
+void print_values_in_range(AVLnode* root, int start, int end, int* found) {
     if (root == NULL) return;
 
-    if (root->value > low)
-        print_values_in_range(root->left, low, high, found);
+    if (root->value > start)
+        print_values_in_range(root->left, start, end, found);
 
-    if (root->value >= low && root->value <= high) {
+    if (root->value >= start && root->value <= end) {
         if (*found == 0) {
             *found = 1;
             printf("%d", root->value);
@@ -226,8 +232,8 @@ void print_values_in_range(AVLnode* root, int low, int high, int* found) {
         }
     }
 
-    if (root->value < high)
-        print_values_in_range(root->right, low, high, found);
+    if (root->value < end)
+        print_values_in_range(root->right, start, end, found);
 }
 
 int main() {
