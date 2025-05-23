@@ -23,19 +23,10 @@ void frees_allocated_memory(AVLnode* root) {
     }
 }
 
-// Realiza a travessia in-order (em ordem) da árvore AVL e imprime os valores
-void print_in_order(AVLnode* root) {
-    if (root != NULL) {
-        print_in_order(root->left);
-        printf("%d ", root->value);
-        print_in_order(root->right);
-    }
-}
-
 // Retorna a altura de um nó (0 se o nó for NULL)
-int get_height(AVLnode* n) {
-    if (n == NULL) return 0;
-    return n->height;
+int get_height(AVLnode* node) {
+    if (node == NULL) return 0;
+    return node->height;
 }
 
 // Cria e retorna um novo nó AVL com o valor fornecido
@@ -54,9 +45,9 @@ int max(int a, int b) {
 }
 
 // Calcula e retorna o fator de balanceamento de um nó
-int get_balance_factor(AVLnode* n) {
-    if (n == NULL) return 0;
-    return get_height(n->left) - get_height(n->right);
+int get_balance_factor(AVLnode* node) {
+    if (node == NULL) return 0;
+    return get_height(node->left) - get_height(node->right);
 }
 
 // Executa uma rotação simples para a direita
@@ -87,38 +78,44 @@ AVLnode* left_rotate(AVLnode* x) {
     return y;
 }
 
-// Insere um valor na árvore AVL e realiza balanceamentos se necessário
-AVLnode* insert_node(AVLnode* root, int value) {
-    if (root == NULL) return create_node(value);
-
-    if (value < root->value) {
-        root->left = insert_node(root->left, value);
-    } else if (value > root->value) {
-        root->right = insert_node(root->right, value);
-    } else {
-        return root;
-    }
+// Rebalanceia um nó AVL e atualiza sua altura
+AVLnode* rebalance(AVLnode* root) {
+    if (root == NULL) return NULL;
 
     root->height = 1 + max(get_height(root->left), get_height(root->right));
     int balance = get_balance_factor(root);
 
-    if (balance > 1 && value < root->left->value)
+    if (balance > 1 && get_balance_factor(root->left) >= 0)
         return right_rotate(root);
 
-    if (balance < -1 && value > root->right->value)
-        return left_rotate(root);
-
-    if (balance > 1 && value > root->left->value) {
+    if (balance > 1 && get_balance_factor(root->left) < 0) {
         root->left = left_rotate(root->left);
         return right_rotate(root);
     }
 
-    if (balance < -1 && value < root->right->value) {
+    if (balance < -1 && get_balance_factor(root->right) <= 0)
+        return left_rotate(root);
+
+    if (balance < -1 && get_balance_factor(root->right) > 0) {
         root->right = right_rotate(root->right);
         return left_rotate(root);
     }
 
     return root;
+}
+
+// Insere um valor na árvore AVL e realiza balanceamentos se necessário
+AVLnode* insert_node(AVLnode* root, int value) {
+    if (root == NULL) return create_node(value);
+
+    if (value < root->value)
+        root->left = insert_node(root->left, value);
+    else if (value > root->value)
+        root->right = insert_node(root->right, value);
+    else
+        return root;
+
+    return rebalance(root);
 }
 
 // Encontra o nó sucessor (menor valor da subárvore à direita)
@@ -133,19 +130,19 @@ AVLnode* finds_successor(AVLnode* node) {
 AVLnode* delete_node(AVLnode* root, int value) {
     if (root == NULL) return root;
 
-    if (value < root->value) {
+    if (value < root->value)
         root->left = delete_node(root->left, value);
-    } else if (value > root->value) {
+    else if (value > root->value)
         root->right = delete_node(root->right, value);
-    } else {
-        if ((root->left == NULL) || (root->right == NULL)) {
+    else {
+        if (root->left == NULL || root->right == NULL) {
             AVLnode* temp = root->left ? root->left : root->right;
 
             if (temp == NULL) {
                 temp = root;
                 root = NULL;
             } else {
-                *root = *temp; 
+                *root = *temp;
             }
             free(temp);
         } else {
@@ -155,30 +152,10 @@ AVLnode* delete_node(AVLnode* root, int value) {
         }
     }
 
-    if (root == NULL) return root;
-    root->height = 1 + max(get_height(root->left), get_height(root->right));
-    int balance = get_balance_factor(root);
-
-    if (balance > 1 && get_balance_factor(root->left) >= 0){
-        return right_rotate(root);
-    }
-
-    if (balance > 1 && get_balance_factor(root->left) < 0) {
-        root->left = left_rotate(root->left);
-        return right_rotate(root);
-    }
-
-    if (balance < -1 && get_balance_factor(root->right) <= 0){
-        return left_rotate(root);
-    }
-
-    if (balance < -1 && get_balance_factor(root->right) > 0) {
-        root->right = right_rotate(root->right);
-        return left_rotate(root);
-    }
-
-    return root;
+    if (root == NULL) return NULL;
+    return rebalance(root);
 }
+
 
 // Procura um nó com determinado valor e retorna seu endereço ou NULL
 AVLnode* search_node(AVLnode* root, int value) {
