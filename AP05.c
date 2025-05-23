@@ -28,16 +28,6 @@ int get_height(AVLnode* node) {
     return node != NULL ? node->height : 0;
 }
 
-// Cria e retorna um novo nó AVL com o valor fornecido
-AVLnode* create_node(int value) {
-    AVLnode* node = (struct AVLnode*)malloc(sizeof(struct AVLnode));
-    node->value = value;
-    node->height = 1;
-    node->left = NULL;
-    node->right = NULL;
-    return node;
-}
-
 // Retorna o maior entre dois valores inteiros
 int max(int a, int b) { 
     return a > b ? a : b;
@@ -101,6 +91,16 @@ AVLnode* rebalance(AVLnode* root) {
     }
 
     return root;
+}
+
+// Cria e retorna um novo nó AVL com o valor fornecido
+AVLnode* create_node(int value) {
+    AVLnode* node = (struct AVLnode*)malloc(sizeof(struct AVLnode));
+    node->value = value;
+    node->height = 1;
+    node->left = NULL;
+    node->right = NULL;
+    return node;
 }
 
 // Insere um valor na árvore AVL e realiza balanceamentos se necessário
@@ -212,6 +212,24 @@ void print_values_in_range(AVLnode* root, int start, int end, int* found) {
         print_values_in_range(root->right, start, end, found);
 }
 
+// Imprime os valores da faixa encontrados e suas alturas,
+// ou "NADA A EXIBIR" se não houver nenhum
+void print_range_and_heights(AVLnode* root, int low, int high) {
+    int found = 0;
+    print_values_in_range(root, low, high, &found);
+
+    if (!found) printf("NADA A EXIBIR");
+    printf("\n");
+
+    if (found) {
+        for (int i = low; i <= high; i++) {
+            AVLnode* temp = search_node(root, i);
+            if (temp != NULL)
+                print_tree_heights(temp);
+        }
+    }
+}
+
 int main() {
     int n, startRange, endRange;
     AVLnode* root = NULL;
@@ -230,20 +248,7 @@ int main() {
 
     // 3ª linha: faixa de busca
     scanf("%d %d", &startRange, &endRange);
-
-    int found = 0;
-    print_values_in_range(root, startRange, endRange, &found);
-    if (!found) printf("NADA A EXIBIR");
-    printf("\n");
-
-    if (found) {
-        AVLnode* temp;
-        for (int i = startRange; i <= endRange; i++) {
-            temp = search_node(root, i);
-            if (temp != NULL)
-                print_tree_heights(temp);
-        }
-    }
+    print_range_and_heights(root, startRange, endRange);
 
     frees_allocated_memory(root);
 
