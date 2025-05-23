@@ -25,8 +25,7 @@ void frees_allocated_memory(AVLnode* root) {
 
 // Retorna a altura de um nó (0 se o nó for NULL)
 int get_height(AVLnode* node) {
-    if (node == NULL) return 0;
-    return node->height;
+    return node != NULL ? node->height : 0;
 }
 
 // Cria e retorna um novo nó AVL com o valor fornecido
