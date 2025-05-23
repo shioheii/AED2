@@ -258,14 +258,12 @@ int main() {
         AVLnode* temp;
         for (int i = startRange; i <= endRange; i++) {
             temp = search_node(root, i);
-            if (temp != NULL) {
+            if (temp != NULL)
                 print_tree_heights(temp);
-            }
         }
-        free(temp);
     }
 
-    // frees_allocated_memory(root);
+    frees_allocated_memory(root);
 
     return 0;
 }
