@@ -192,36 +192,33 @@ void print_tree_heights(AVLnode* root) {
 }
 
 // Imprime os valores dentro de uma faixa [start, end] em ordem crescente
-void print_values_in_range(AVLnode* root, int start, int end, int* found) {
-    if (root == NULL) return;
+// Retorna 1 se encontrar pelo menos um do intervalo ou 0 se nenhum
+int print_values_in_range(AVLnode* root, int start, int end) {
+    if (root == NULL) return 0;
 
-    if (root->value > start)
-        print_values_in_range(root->left, start, end, found);
-
-    if (root->value >= start && root->value <= end) {
-        if (*found == 0) {
-            *found = 1;
-            printf("%d", root->value);
-        } else {
-            printf(", %d", root->value);
+    int found = 0;
+    for (int i = start; i <= end; i++) {
+        AVLnode* temp = search_node(root, i);
+        if (temp != NULL) {
+            if (found == 0) {
+                found = 1;
+                printf("%d", temp->value);
+            } else {
+                printf(", %d", temp->value);
+            }
         }
     }
-
-    if (root->value < end)
-        print_values_in_range(root->right, start, end, found);
+    return found;
 }
 
-// Imprime os valores da faixa encontrados e suas alturas,
+// Imprime as alturas para os valores encontrados no intervalo,
 // ou "NADA A EXIBIR" se não houver nenhum
-void print_range_and_heights(AVLnode* root, int low, int high) {
-    int found = 0;
-    print_values_in_range(root, low, high, &found);
-
+void print_heights_range(AVLnode* root, int start, int end, int found) {
     if (!found) printf("NADA A EXIBIR");
     printf("\n");
 
     if (found) {
-        for (int i = low; i <= high; i++) {
+        for (int i = start; i <= end; i++) {
             AVLnode* temp = search_node(root, i);
             if (temp != NULL)
                 print_tree_heights(temp);
@@ -247,7 +244,8 @@ int main() {
 
     // 3ª linha: faixa de busca
     scanf("%d %d", &startRange, &endRange);
-    print_range_and_heights(root, startRange, endRange);
+    int found = print_values_in_range(root, startRange, endRange);
+    print_heights_range(root, startRange, endRange, found);
 
     frees_allocated_memory(root);
 
