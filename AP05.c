@@ -6,13 +6,6 @@
 
 #include<stdio.h>
 #include<stdlib.h>
-/*
-6 4 3 2 1 -1
-4 5 -1
-2 6
-*/
-int const true = 1;
-int const false = 0;
 
 typedef struct AVLnode {
     int value;
@@ -20,6 +13,14 @@ typedef struct AVLnode {
     struct AVLnode* left;
     struct AVLnode* right;
 } AVLnode;
+
+void frees_allocated_memory(AVLnode* root) {
+    if (root != NULL) {
+        frees_allocated_memory(root->left);
+        frees_allocated_memory(root->right);
+        free(root);
+    }
+}
 
 // Function to perform preorder traversal of AVL tree
 void print_in_order(AVLnode* root) {
@@ -177,23 +178,23 @@ AVLnode* delete_node(AVLnode* root, int value) {
     return root;
 }
 
-int search(AVLnode* root, int value) {
+AVLnode* search_node(AVLnode* root, int value) {
     if (root == NULL)
-        return false;
+        return NULL;
 
     if (root->value == value)
-        return true;
+        return root;
 
     if (value < root->value) 
-        return search(root->left, value);
+        return search_node(root->left, value);
 
-    return search(root->right, value);
+    return search_node(root->right, value);
 }
 
 void insert_or_remove_value(AVLnode** root, int value) {
-    int value_found = search(*root, value);
+    AVLnode* temp = search_node(*root, value);
 
-    if (value_found)
+    if (temp != NULL)
         *root = delete_node(*root, value);
     else
         *root = insert_node(*root, value);
@@ -229,21 +230,6 @@ void print_values_in_range(AVLnode* root, int low, int high, int* found) {
         print_values_in_range(root->right, low, high, found);
 }
 
-void print_node_height_info(AVLnode* root, int value) {
-    if (root == NULL) return;
-
-    if (root->value == value) {
-        int hl = get_height(root->left);
-        int hr = get_height(root->right);
-        int h = max(hl, hr);
-        printf("%d, %d, %d\n", h, hl, hr);
-    } else if (value < root->value) {
-        print_node_height_info(root->left, value);
-    } else {
-        print_node_height_info(root->right, value);
-    }
-}
-
 int main() {
     int n, startRange, endRange;
     AVLnode* root = NULL;
@@ -265,17 +251,21 @@ int main() {
 
     int found = 0;
     print_values_in_range(root, startRange, endRange, &found);
-    if (!found)
-        printf("NADA A EXIBIR");
+    if (!found) printf("NADA A EXIBIR");
     printf("\n");
 
     if (found) {
+        AVLnode* temp;
         for (int i = startRange; i <= endRange; i++) {
-            if (search(root, i)) {
-                print_node_height_info(root, i);
+            temp = search_node(root, i);
+            if (temp != NULL) {
+                print_tree_heights(temp);
             }
         }
+        free(temp);
     }
+
+    // frees_allocated_memory(root);
 
     return 0;
 }
