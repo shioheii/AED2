@@ -151,7 +151,6 @@ AVLnode* delete_node(AVLnode* root, int value) {
         }
     }
 
-    if (root == NULL) return NULL;
     return rebalance(root);
 }
 
@@ -234,7 +233,7 @@ int main() {
     int n, startRange, endRange;
     AVLnode* root = NULL;
 
-    // 1ª linha: inserção inicial
+    // 1ª linha: monta a árvore inicial
     while (scanf("%d", &n) && n >= 0) {
         root = insert_node(root, n);
     }
