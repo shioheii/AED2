@@ -1,25 +1,29 @@
-/*
- * AP06 - AED2 - Bruno Shiohei
- * Comparação entre Árvores AVL e Árvores Rubro-Negras (AVP)
- */
+/***********************************************
+ * UNIFESP - Universidade Federal de São Paulo
+ * Nome: Bruno Shiohei Kinoshita do Nascimento
+ * RA: 176475
+************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
+
+/************ METODOS E VARIAVEIS GLOBAIS ************/
+
+const int RED = 1;
+const int BLACK = 0;
+int avl_rotations = 0, color_changes = 0, avp_rotations = 0;
 
 int max(int a, int b) {
     return a > b ? a : b;
 }
 
-/******************* AVL TREE DEFINITIONS *******************/
-
+/******************* ARVORE AVL  *******************/
 typedef struct AVLnode {
     int value;
     int height;
     struct AVLnode* left;
     struct AVLnode* right;
 } AVLnode;
-
-int avl_rotations = 0;
 
 int get_avl_height(AVLnode* node) {
     return node ? node->height : 0;
@@ -110,19 +114,15 @@ void free_avl(AVLnode* root) {
     }
 }
 
-/******************* AVP TREE DEFINITIONS *******************/
-
-const int BLACK = 0;
-const int RED = 1;
-
+/******************* ARVORE AVP  *******************/
 typedef struct AVPNode {
     int value;
     int height;
     int color;
-    struct AVPNode *left, *right, *parent;
+    struct AVPNode *left;
+    struct AVPNode *right;
+    struct AVPNode *parent;
 } AVPNode;
-
-int color_changes = 0, avp_rotations = 0;
 
 int get_avp_height(AVPNode* node) {
     return node ? node->height : 0;
@@ -132,98 +132,9 @@ AVPNode* update_avp_height(AVPNode* node) {
     if (node) {
         int lh = get_avp_height(node->left);
         int rh = get_avp_height(node->right);
-        node->height = 1 + (lh > rh ? lh : rh);
+        node->height = max(lh, rh) + 1;
     }
     return node;
-}
-
-AVPNode* create_avp_node(int value) {
-    AVPNode* node = (AVPNode*)malloc(sizeof(AVPNode));
-    node->value = value;
-    node->color = RED;
-    node->height = 1;
-    node->left = node->right = node->parent = NULL;
-    return node;
-}
-
-AVPNode* left_rotate_avp(AVPNode* root, AVPNode* x) {
-    AVPNode* y = x->right;
-    x->right = y->left;
-    if (y->left) y->left->parent = x;
-    y->parent = x->parent;
-    if (!x->parent) root = y;
-    else if (x == x->parent->left) x->parent->left = y;
-    else x->parent->right = y;
-    y->left = x;
-    x->parent = y;
-    update_avp_height(x);
-    update_avp_height(y);
-    avp_rotations++;
-    return root;
-}
-
-AVPNode* right_rotate_avp(AVPNode* root, AVPNode* y) {
-    AVPNode* x = y->left;
-    y->left = x->right;
-    if (x->right) x->right->parent = y;
-    x->parent = y->parent;
-    if (!y->parent) root = x;
-    else if (y == y->parent->left) y->parent->left = x;
-    else y->parent->right = x;
-    x->right = y;
-    y->parent = x;
-    update_avp_height(y);
-    update_avp_height(x);
-    avp_rotations++;
-    return root;
-}
-
-AVPNode* fix_avp(AVPNode* root, AVPNode* z) {
-    while (z->parent && z->parent->color == RED) {
-        AVPNode* g = z->parent->parent;
-        if (z->parent == g->left) {
-            AVPNode* y = g->right;
-            if (y && y->color == RED) {
-                z->parent->color = BLACK;
-                y->color = BLACK;
-                g->color = RED;
-                color_changes += 3;
-                z = g;
-            } else {
-                if (z == z->parent->right) {
-                    z = z->parent;
-                    root = left_rotate_avp(root, z);
-                }
-                z->parent->color = BLACK;
-                g->color = RED;
-                color_changes += 2;
-                root = right_rotate_avp(root, g);
-            }
-        } else {
-            AVPNode* y = g->left;
-            if (y && y->color == RED) {
-                z->parent->color = BLACK;
-                y->color = BLACK;
-                g->color = RED;
-                color_changes += 3;
-                z = g;
-            } else {
-                if (z == z->parent->left) {
-                    z = z->parent;
-                    root = right_rotate_avp(root, z);
-                }
-                z->parent->color = BLACK;
-                g->color = RED;
-                color_changes += 2;
-                root = left_rotate_avp(root, g);
-            }
-        }
-    }
-    if (root->color == RED) {
-        root->color = BLACK;
-        color_changes++;
-    }
-    return root;
 }
 
 void fix_heights_upward(AVPNode* node) {
@@ -231,6 +142,127 @@ void fix_heights_upward(AVPNode* node) {
         update_avp_height(node);
         node = node->parent;
     }
+}
+
+void left_rotate_avp(AVPNode** root, AVPNode* x) {
+    avp_rotations++;
+    AVPNode* y = x->right;
+    x->right = y->left;
+    if (x->right != NULL) {
+        x->right->parent = x;
+    }
+
+    y->parent = x->parent;
+    if (x->parent == NULL) {
+        *root = y;
+    } else if (x == x->parent->left) {
+        x->parent->left = y;
+    } else {
+        x->parent->right = y;
+    }
+    update_avp_height(x);
+    update_avp_height(y);
+    y->left = x;
+    x->parent = y;
+}
+
+void right_rotate_avp(AVPNode** root, AVPNode* y) {
+    avp_rotations++;
+    AVPNode* x = y->left;
+    y->left = x->right;
+    if (y->left != NULL) {
+        y->left->parent = y;
+    }
+
+    x->parent = y->parent;
+    if (y->parent == NULL) {
+        *root = x;
+    } else if (y == y->parent->left) {
+        y->parent->left = x;
+    } else {
+        y->parent->right = x;
+    }
+    update_avp_height(y);
+    update_avp_height(x);
+    x->right = y;
+    y->parent = x;
+}
+
+void fix_avp(AVPNode** root, AVPNode* z) {
+    AVPNode* parent_z = NULL;
+    AVPNode* grand_parent_z = NULL;
+
+    while ((z != *root) && (z->color != BLACK) && (z->parent->color == RED)) {
+        parent_z = z->parent;
+        grand_parent_z = z->parent->parent;
+
+        // Caso A: Pai é filho esquerdo do avô
+        if (parent_z == grand_parent_z->left) {
+            AVPNode* uncle_pt = grand_parent_z->right;
+
+            // Caso 1: Tio é vermelho
+            if (uncle_pt != NULL && uncle_pt->color == RED) {
+                grand_parent_z->color = RED;
+                parent_z->color = BLACK;
+                uncle_pt->color = BLACK;
+                color_changes += 3;
+                z = grand_parent_z;
+            } else {
+                // Caso 2: z é filho direito
+                if (z == parent_z->right) {
+                    left_rotate_avp(root, parent_z);
+                    z = parent_z;
+                    parent_z = z->parent;
+                }
+
+                // Caso 3: z é filho esquerdo
+                right_rotate_avp(root, grand_parent_z);
+                int color_temp = parent_z->color;
+                parent_z->color = grand_parent_z->color;
+                grand_parent_z->color = color_temp;
+                color_changes += 2;
+                z = parent_z;
+            }
+        } else { // Caso B: Pai é filho direito do avô
+            AVPNode* uncle_pt = grand_parent_z->left;
+
+            // Caso 1: Tio é vermelho
+            if (uncle_pt != NULL && uncle_pt->color == RED) {
+                grand_parent_z->color = RED;
+                parent_z->color = BLACK;
+                uncle_pt->color = BLACK;
+                color_changes += 3;
+                z = grand_parent_z;
+            } else {
+                // Caso 2: z é filho esquerdo
+                if (z == parent_z->left) {
+                    right_rotate_avp(root, parent_z);
+                    z = parent_z;
+                    parent_z = z->parent;
+                }
+
+                // Caso 3: z é filho direito
+                left_rotate_avp(root, grand_parent_z);
+                int color_temp = parent_z->color;
+                parent_z->color = grand_parent_z->color;
+                grand_parent_z->color = color_temp;
+                color_changes += 2;
+                z = parent_z;
+            }
+        }
+    }
+
+    (*root)->color = BLACK;
+    if ((*root)->color != BLACK) color_changes++;
+}
+
+AVPNode* create_avp_node(int value) {
+    AVPNode* node = (AVPNode*)malloc(sizeof(AVPNode));
+    node->value = value;
+    node->left = node->right = node->parent = NULL;
+    node->color = RED;
+    node->height = 1;
+    return node;
 }
 
 AVPNode* insert_avp_node(AVPNode* root, int value) {
@@ -247,16 +279,17 @@ AVPNode* insert_avp_node(AVPNode* root, int value) {
     if (!y) root = z;
     else if (value < y->value) y->left = z;
     else y->right = z;
-    root = fix_avp(root, z);
+
+    fix_avp(&root, z);
     fix_heights_upward(z);
-    return update_avp_height(root);
+    return root;
 }
 
 int get_black_height(AVPNode* node) {
     if (!node) return 0;
-    int lh = get_black_height(node->left);
-    int rh = get_black_height(node->right);
-    int maxh = lh > rh ? lh : rh;
+    int hl = get_black_height(node->left);
+    int hr = get_black_height(node->right);
+    int maxh = max(hl, hr);
     return maxh + (node->color == BLACK ? 1 : 0);
 }
 
@@ -279,16 +312,15 @@ void free_avp(AVPNode* root) {
     }
 }
 
-/******************* MAIN *******************/
-
+/******************* MODULO PRINCIPAL  *******************/
 int main() {
-    int x;
+    int n;
     AVLnode* avl_root = NULL;
     AVPNode* avp_root = NULL;
 
-    while (scanf("%d", &x) && x >= 0) {
-        avl_root = insert_avl_node(avl_root, x);
-        avp_root = insert_avp_node(avp_root, x);
+    while (scanf("%d", &n) && n >= 0) {
+        avl_root = insert_avl_node(avl_root, n);
+        avp_root = insert_avp_node(avp_root, n);
     }
 
     print_avl_tree_heights(avl_root);
