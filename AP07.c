@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/************ METODOS E VARIAVEIS GLOBAIS ************/
+/************ MÉTODOS E VARIÁVEIS GLOBAIS ************/
 
 const int RED = 1;
 const int BLACK = 0;
@@ -11,7 +11,7 @@ int max(int a, int b) {
     return a > b ? a : b;
 }
 
-/******************* ARVORE AVP  *******************/
+/******************* ÁRVORE RUBRO-NEGRA (AVP) *******************/
 typedef struct AVPNode {
     int value;
     int height;
@@ -21,11 +21,12 @@ typedef struct AVPNode {
     struct AVPNode *parent;
 } AVPNode;
 
-// Retorna a altura de um nó (0 se o nó for NULL)
+// Retorna a altura de um nó (0 se for NULL)
 int get_avp_height(AVPNode* node) {
     return node ? node->height : 0;
 }
 
+// Printa a altura da árvore e das subárvores da esquerda e direita
 void print_avp_tree_heights(AVPNode* root) {
     int hl = get_avp_height(root->left);
     int hr = get_avp_height(root->right);
@@ -33,6 +34,7 @@ void print_avp_tree_heights(AVPNode* root) {
     printf("%d, %d, %d\n", h, hl, hr);
 }
 
+// Atualiza e retorna a altura de um nó
 AVPNode* update_avp_height(AVPNode* node) {
     if (node) {
         int lh = get_avp_height(node->left);
@@ -42,6 +44,7 @@ AVPNode* update_avp_height(AVPNode* node) {
     return node;
 }
 
+// Atualiza alturas de todos os ancestrais até a raiz
 void fix_heights_upward(AVPNode* node) {
     while (node) {
         update_avp_height(node);
@@ -49,7 +52,7 @@ void fix_heights_upward(AVPNode* node) {
     }
 }
 
-// Executa uma rotação simples para a esquerda
+// Rotação simples para a esquerda
 void left_rotate_avp(AVPNode** root, AVPNode* x) {
     AVPNode* y = x->right;
     x->right = y->left;
@@ -71,7 +74,7 @@ void left_rotate_avp(AVPNode** root, AVPNode* x) {
     x->parent = y;
 }
 
-// Executa uma rotação simples para a direita
+// Rotação simples para a direita
 void right_rotate_avp(AVPNode** root, AVPNode* y) {
     AVPNode* x = y->left;
     y->left = x->right;
@@ -93,23 +96,24 @@ void right_rotate_avp(AVPNode** root, AVPNode* y) {
     y->parent = x;
 }
 
+// Corrige propriedades da AVP após inserção
 void fix_avp(AVPNode** root, AVPNode* z) {
     AVPNode* parent_z = NULL;
     AVPNode* grand_parent_z = NULL;
 
     while ((z != *root) && (z->color != BLACK) && (z->parent->color == RED)) {
         parent_z = z->parent;
-        grand_parent_z = z->parent->parent;
+        grand_parent_z = parent_z->parent;
 
         // Caso A: Pai é filho esquerdo do avô
         if (parent_z == grand_parent_z->left) {
-            AVPNode* uncle_pt = grand_parent_z->right;
+            AVPNode* uncle = grand_parent_z->right;
 
             // Caso 1: Tio é vermelho
-            if (uncle_pt != NULL && uncle_pt->color == RED) {
+            if (uncle != NULL && uncle->color == RED) {
                 grand_parent_z->color = RED;
                 parent_z->color = BLACK;
-                uncle_pt->color = BLACK;
+                uncle->color = BLACK;
                 z = grand_parent_z;
             } else {
                 // Caso 2: z é filho direito
@@ -127,13 +131,13 @@ void fix_avp(AVPNode** root, AVPNode* z) {
                 z = parent_z;
             }
         } else { // Caso B: Pai é filho direito do avô
-            AVPNode* uncle_pt = grand_parent_z->left;
+            AVPNode* uncle = grand_parent_z->left;
 
             // Caso 1: Tio é vermelho
-            if (uncle_pt != NULL && uncle_pt->color == RED) {
+            if (uncle != NULL && uncle->color == RED) {
                 grand_parent_z->color = RED;
                 parent_z->color = BLACK;
-                uncle_pt->color = BLACK;
+                uncle->color = BLACK;
                 z = grand_parent_z;
             } else {
                 // Caso 2: z é filho esquerdo
@@ -152,11 +156,10 @@ void fix_avp(AVPNode** root, AVPNode* z) {
             }
         }
     }
-
     (*root)->color = BLACK;
 }
 
-// Encontra o nó sucessor (menor valor da subárvore à direita)
+// Encontra o menor valor da subárvore à direita (sucessor)
 AVPNode* finds_successor(AVPNode* node) {
     while (node->left != NULL) {
         node = node->left;
@@ -164,38 +167,122 @@ AVPNode* finds_successor(AVPNode* node) {
     return node;
 }
 
-// Remove um valor da árvore AVL e realiza balanceamentos se necessário
-// AVPNode* delete_avp_node(AVPNode* root, int value) {
-//     if (root == NULL) return root;
+// Substitui o nó u por v na árvore
+void rb_transplant(AVPNode** root, AVPNode* u, AVPNode* v) {
+    if (u->parent == NULL)
+        *root = v;
+    else if (u == u->parent->left)
+        u->parent->left = v;
+    else
+        u->parent->right = v;
+    if (v)
+        v->parent = u->parent;
+}
 
-//     if (value < root->value)
-//         root->left = delete_avp_node(root->left, value);
-//     else if (value > root->value)
-//         root->right = delete_avp_node(root->right, value);
-//     else {
-//         if (root->left == NULL || root->right == NULL) {
-//             AVPNode* temp = root->left ? root->left : root->right;
+// Corrige propriedades da AVP após remoção de um nó preto
+void fix_delete(AVPNode** root, AVPNode* x) {
+    while (x != *root && (x == NULL || x->color == BLACK)) {
+        AVPNode* parent = x ? x->parent : NULL;
+        if (parent == NULL) break;
 
-//             if (temp == NULL) {
-//                 temp = root;
-//                 root = NULL;
-//             } else {
-//                 *root = *temp;
-//             }
-//             free(temp);
-//         } else {
-//             AVPNode* temp = finds_successor(root->right);
-//             root->value = temp->value;
-//             root->right = delete_avp_node(root->right, temp->value);
-//         }
-//     }
+        if (x == parent->left) {
+            AVPNode* w = parent->right;
+            if (w && w->color == RED) {
+                w->color = BLACK;
+                parent->color = RED;
+                left_rotate_avp(root, parent);
+                w = parent->right;
+            }
+            if ((!w || !w->left || w->left->color == BLACK) &&
+                (!w || !w->right || w->right->color == BLACK)) {
+                if (w) w->color = RED;
+                x = parent;
+            } else {
+                if (!w->right || w->right->color == BLACK) {
+                    if (w->left)
+                        w->left->color = BLACK;
+                    if (w) w->color = RED;
+                    right_rotate_avp(root, w);
+                    w = parent->right;
+                }
+                if (w) w->color = parent->color;
+                parent->color = BLACK;
+                if (w && w->right)
+                    w->right->color = BLACK;
+                left_rotate_avp(root, parent);
+                x = *root;
+            }
+        } else {
+            AVPNode* w = parent->left;
+            if (w && w->color == RED) {
+                w->color = BLACK;
+                parent->color = RED;
+                right_rotate_avp(root, parent);
+                w = parent->left;
+            }
+            if ((!w || !w->left || w->left->color == BLACK) &&
+                (!w || !w->right || w->right->color == BLACK)) {
+                if (w) w->color = RED;
+                x = parent;
+            } else {
+                if (!w->left || w->left->color == BLACK) {
+                    if (w->right)
+                        w->right->color = BLACK;
+                    if (w) w->color = RED;
+                    left_rotate_avp(root, w);
+                    w = parent->left;
+                }
+                if (w) w->color = parent->color;
+                parent->color = BLACK;
+                if (w && w->left)
+                    w->left->color = BLACK;
+                right_rotate_avp(root, parent);
+                x = *root;
+            }
+        }
+    }
+    if (x) x->color = BLACK;
+}
 
-//     fix_avp(&root, z);
-//     fix_heights_upward(z);
-//     return root;
-// }
+// Remove um nó com o valor informado
+AVPNode* delete_avp_node(AVPNode* root, AVPNode* z) {
+    AVPNode* y = z;
+    AVPNode* x;
+    int y_original_color = y->color;
 
-// Cria e retorna um novo nó AVP com o valor fornecido
+    if (!z->left) {
+        x = z->right;
+        rb_transplant(&root, z, z->right);
+    } else if (!z->right) {
+        x = z->left;
+        rb_transplant(&root, z, z->left);
+    } else {
+        y = finds_successor(z->right);
+        y_original_color = y->color;
+        x = y->right;
+        if (y->parent != z) {
+            rb_transplant(&root, y, y->right);
+            y->right = z->right;
+            if (y->right)
+                y->right->parent = y;
+        }
+        rb_transplant(&root, z, y);
+        y->left = z->left;
+        if (y->left)
+            y->left->parent = y;
+        y->color = z->color;
+        update_avp_height(y);
+    }
+
+    free(z);
+    if (y_original_color == BLACK)
+        fix_delete(&root, x);
+
+    fix_heights_upward(x ? x : y);
+    return root;
+}
+
+// Cria e retorna um novo nó AVP
 AVPNode* create_avp_node(int value) {
     AVPNode* node = (AVPNode*)malloc(sizeof(AVPNode));
     node->value = value;
@@ -205,7 +292,7 @@ AVPNode* create_avp_node(int value) {
     return node;
 }
 
-// Insere um valor na árvore AVP e realiza balanceamentos se necessário
+// Insere um valor na árvore AVP
 AVPNode* insert_avp_node(AVPNode* root, int value) {
     AVPNode* z = create_avp_node(value);
     AVPNode* y = NULL;
@@ -226,32 +313,29 @@ AVPNode* insert_avp_node(AVPNode* root, int value) {
     return root;
 }
 
-// Procura um nó com determinado valor e retorna seu endereço ou NULL
+// Busca um nó com o valor dado
 AVPNode* search_node(AVPNode* root, int value) {
-    if (root == NULL)
-        return NULL;
-
-    if (root->value == value)
-        return root;
-
+    if (root == NULL) return NULL;
+    if (root->value == value) return root;
+    
     if (value < root->value) 
         return search_node(root->left, value);
 
     return search_node(root->right, value);
 }
 
-// Insere o valor se ele não estiver na árvore, ou remove se já estiver
+// Insere ou remove um valor, exibindo altura antes da remoção
 void insert_or_remove_value(AVPNode** root, int value) {
     AVPNode* temp = search_node(*root, value);
-    if (temp != NULL) {
+    if (temp) {
         print_avp_tree_heights(temp);
-        // *root = delete_avp_node(*root, value);
+        *root = delete_avp_node(*root, temp);
     } else {
         *root = insert_avp_node(*root, value);
     }
 }
 
-// Retorna a altura vermelha de um nó
+// Calcula a altura vermelha de um nó
 int get_red_height(AVPNode* node) {
     if (!node) return 0;
     int hl = get_red_height(node->left);
@@ -260,7 +344,7 @@ int get_red_height(AVPNode* node) {
     return maxh + (node->color == RED ? 1 : 0);
 }
 
-// Printa o valor da altura vermelha do nó ou "Valor nao encontrado"
+// Exibe a altura vermelha de um nó ou "Valor nao encontrado"
 void print_avp_red_height(AVPNode* root, int value) {
     AVPNode* temp = search_node(root, value);
     if (temp) {
@@ -270,7 +354,7 @@ void print_avp_red_height(AVPNode* root, int value) {
     }
 }
 
-// Libera recursivamente toda a memória alocada para a árvore AVP
+// Libera a memória de toda a árvore
 void free_avp(AVPNode* root) {
     if (root) {
         free_avp(root->left);
@@ -279,7 +363,7 @@ void free_avp(AVPNode* root) {
     }
 }
 
-/******************* MODULO PRINCIPAL  *******************/
+/******************* MÓDULO PRINCIPAL *******************/
 int main() {
     int n;
     AVPNode* avp_root = NULL;
