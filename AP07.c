@@ -181,105 +181,12 @@ void rb_transplant(AVPNode** root, AVPNode* u, AVPNode* v) {
 
 // Corrige propriedades da AVP após remoção de um nó preto
 void fix_delete(AVPNode** root, AVPNode* x) {
-    while (x != *root && (x == NULL || x->color == BLACK)) {
-        AVPNode* parent = x ? x->parent : NULL;
-        if (parent == NULL) break;
-
-        if (x == parent->left) {
-            AVPNode* w = parent->right;
-            if (w && w->color == RED) {
-                w->color = BLACK;
-                parent->color = RED;
-                left_rotate_avp(root, parent);
-                w = parent->right;
-            }
-            if ((!w || !w->left || w->left->color == BLACK) &&
-                (!w || !w->right || w->right->color == BLACK)) {
-                if (w) w->color = RED;
-                x = parent;
-            } else {
-                if (!w->right || w->right->color == BLACK) {
-                    if (w->left)
-                        w->left->color = BLACK;
-                    if (w) w->color = RED;
-                    right_rotate_avp(root, w);
-                    w = parent->right;
-                }
-                if (w) w->color = parent->color;
-                parent->color = BLACK;
-                if (w && w->right)
-                    w->right->color = BLACK;
-                left_rotate_avp(root, parent);
-                x = *root;
-            }
-        } else {
-            AVPNode* w = parent->left;
-            if (w && w->color == RED) {
-                w->color = BLACK;
-                parent->color = RED;
-                right_rotate_avp(root, parent);
-                w = parent->left;
-            }
-            if ((!w || !w->left || w->left->color == BLACK) &&
-                (!w || !w->right || w->right->color == BLACK)) {
-                if (w) w->color = RED;
-                x = parent;
-            } else {
-                if (!w->left || w->left->color == BLACK) {
-                    if (w->right)
-                        w->right->color = BLACK;
-                    if (w) w->color = RED;
-                    left_rotate_avp(root, w);
-                    w = parent->left;
-                }
-                if (w) w->color = parent->color;
-                parent->color = BLACK;
-                if (w && w->left)
-                    w->left->color = BLACK;
-                right_rotate_avp(root, parent);
-                x = *root;
-            }
-        }
-    }
-    if (x) x->color = BLACK;
+    
 }
 
-// Remove um nó com o valor informado
+// Remove o nó z
 AVPNode* delete_avp_node(AVPNode* root, AVPNode* z) {
-    AVPNode* y = z;
-    AVPNode* x;
-    int y_original_color = y->color;
 
-    if (!z->left) {
-        x = z->right;
-        rb_transplant(&root, z, z->right);
-    } else if (!z->right) {
-        x = z->left;
-        rb_transplant(&root, z, z->left);
-    } else {
-        y = finds_successor(z->right);
-        y_original_color = y->color;
-        x = y->right;
-        if (y->parent != z) {
-            rb_transplant(&root, y, y->right);
-            y->right = z->right;
-            if (y->right)
-                y->right->parent = y;
-        }
-        rb_transplant(&root, z, y);
-        y->left = z->left;
-        if (y->left)
-            y->left->parent = y;
-        y->color = z->color;
-        update_avp_height(y);
-    }
-
-    free(z);
-    if (y_original_color == BLACK)
-        fix_delete(&root, x);
-
-    fix_heights_upward(x ? x : y);
-    return root;
 }
 
 // Cria e retorna um novo nó AVP
@@ -363,6 +270,13 @@ void free_avp(AVPNode* root) {
     }
 }
 
+void print_avp(AVPNode* root) {
+    if (root) {
+        print_avp(root->left);
+        printf("%d %s\n", root->value, root->color == RED ? "RED" : "BLACK");
+        print_avp(root->right);
+    }
+}
 /******************* MÓDULO PRINCIPAL *******************/
 int main() {
     int n;
@@ -377,7 +291,7 @@ int main() {
     while (scanf("%d", &n) && n >= 0) {
         insert_or_remove_value(&avp_root, n);
     }
-
+    print_avp(avp_root);
     scanf("%d", &n);
     print_avp_red_height(avp_root, n);
 
