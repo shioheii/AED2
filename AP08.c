@@ -1,3 +1,9 @@
+/***********************************************
+ * UNIFESP - Universidade Federal de São Paulo
+ * Nome: Bruno Shiohei Kinoshita do Nascimento
+ * RA: 176475
+************************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -89,7 +95,7 @@ int main() {
     int m;
     scanf("%d", &m);
 
-    int* table = (int*) malloc(m * sizeof(int));
+    int* table = (int*)malloc(m * sizeof(int));
     for (int i = 0; i < m; i++) {
         table[i] = EMPTY;
     }
